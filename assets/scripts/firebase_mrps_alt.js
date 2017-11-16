@@ -9,11 +9,9 @@ function checkIfDataPathExists(rootSnapshot) {
 	if (!rootSnapshot.child('gameInstance').exists()) {
 		initDataPath(dataBase.ref(), ['gameInstance']);
 	}
-
 	dataBase.ref('gameRecord').update({
 		'turn': 0
 	});
-
 	dataBase.ref('/gameInstance').set("");
 }
 
@@ -84,7 +82,46 @@ function curgameState(player, opponent) {
 }
 
 
+// seeting up game interface
+function establishPlayerRecord(player, playerRecord) {
+	playerRecord.child(player).set({
+		'win': playerStateMirror['win'],
+		'lose': playerStateMirror['lose'],
+		'tie': playerStateMirror['tie']
+	});
+}
 
+function diableOpponentBtns(opponentBtns) {
+	opponentBtns
+		.children('button')
+		.prop('disabled', 'disabled');
+}
+
+function createBtns(playerBtns) {
+	playerBtns
+		.append(
+			$('<button>')
+			.attr({
+				"class": "btn btn-default list-group-item",
+				"data-value": 0,
+			})
+			.text('Rock')
+		).append(
+			$('<button>')
+			.attr({
+				"class": "btn btn-default list-group-item",
+				"data-value": 1,
+			})
+			.text('Paper')
+		).append(
+			$('<button>')
+			.attr({
+				"class": "btn btn-default list-group-item",
+				"data-value": 2
+			})
+			.text('Scissors')
+		);
+}
 
 /////////////////////////////////////////////////////////////////////////////////////////
 
@@ -186,7 +223,7 @@ dataBase.ref().once('value').then(async function(snapshot) {
 				});
 				console.log(playerStateMirror['playerSequence']);
 				curConnect.onDisconnect().remove();
-				dataBase.ref('gameRecord/player' + playerStateMirror['playerSequence']).onDisconnect().remove();
+				dataBase.ref('gameRecord/' + playerStateMirror['playerName']).onDisconnect().remove();
 			}
 			resolve(connectionsRef);
 		});
@@ -195,7 +232,7 @@ dataBase.ref().once('value').then(async function(snapshot) {
 	console.log(connectionsRef);
 	return new Promise((resolve, reject) => {
 		connectionsRef.once('value').then(function(snapshot) {
-			
+
 			if (snapshot.numChildren() > 2) {
 				connectionsRef.child(connectedId).remove();
 				toggleLogin(true);
@@ -209,7 +246,7 @@ dataBase.ref().once('value').then(async function(snapshot) {
 					'timestamp': firebase.database.ServerValue.TIMESTAMP
 				});
 				input.val('');
-			
+
 				await connectionsRef.once('value').then((snapshot) => {
 					playerStateMirror['playerName'] = snapshot.child(connectedId).child('playerName').val();
 					playerStateMirror['loginTime'] = snapshot.child(connectedId).child('timestamp').val();
@@ -220,7 +257,10 @@ dataBase.ref().once('value').then(async function(snapshot) {
 				resolve(connectionsRef);
 			});
 		})
-	}).catch((msg) => { console.log(msg); dataBase.goOffline(); }); // reconnectUs();
+	}).catch((msg) => {
+		console.log(msg);
+		dataBase.goOffline();
+	}); // reconnectUs();
 
 }).then(function(connectionsRef) {
 	toggleLogin(true);
@@ -252,92 +292,43 @@ async function gameStarts(player, opponent) {
 		gameInstance = dataBase.ref('/gameInstance');
 
 	dataBase.ref('/connections').off('value', gameInit);
-	
+
 	createBtns($('#player-1')); // player
 	createBtns($('#player-2')); // opponent
 	await diableOpponentBtns($('#player-2'));
 	await establishPlayerRecord(player, playerRecord);
+	await initGameInstance(player, gameInstance);
 
-
+	gameplayHandler(player, opponent, gameInstance);
 	console.log('awaited');
 }
 
 
-function establishPlayerRecord(player, playerRecord) {
-	playerRecord.child(player).set({
-		'win': playerStateMirror['win'],
-		'lose': playerStateMirror['lose'],
-		'tie': playerStateMirror['tie']
-	});
+function initGameInstance(player, gameInstance) {
+	gameInstance.child(player).set({
+		'playerMove': -1
+	})
 }
 
 
-function diableOpponentBtns(opponentBtns) {
-	opponentBtns
-		.children('button')
-		.prop('disabled', 'disabled');
+async function gameplayHandler(player, opponent, gameInstance) {
+	let playerChoice, opponentChoice;
+
+	await $('#player-1').on('click', '.btn', (event) => {
+		event.preventDefault();
+
+		playerChoice = $(this).data('value');
+		gameInstance.child(player).update({
+			'playerMove': playerChoice
+		});
+	})
+
+	await gameInstance.child(opponent).once('value').then((snapshot) => {
+		opponentChoice = snapshot.val().playerMove;
+		console.log(opponentChoice);
+	})
+
+	console.log(opponentChoice);
+
+
 }
-
-function createBtns(playerBtns) {
-	playerBtns
-		.append(
-			$('<button>')
-			.attr({
-				"class": "btn btn-default list-group-item",
-				"data-value": 0,
-			})
-			.text('Rock')
-		).append(
-			$('<button>')
-			.attr({
-				"class": "btn btn-default list-group-item",
-				"data-value": 1,
-			})
-			.text('Paper')
-		).append(
-			$('<button>')
-			.attr({
-				"class": "btn btn-default list-group-item",
-				"data-value": 2
-			})
-			.text('Scissors')
-		);
-}
-
-
-
-
-
-
-
-
-function gameInit(player, opponent) {
-	const opponentState = $('#player-2'),
-		playerState = $('#player-1');
-
-	if (!player && !opponent) {
-		playerState.html('');
-		opponentState.html('');
-		return;
-	}
-
-	!!player ? playerState.html(
-		$('<h3>').text(player)) : playerState.html(
-		$('<h3>').text('You are not login, please enter your name.'));
-
-	!!opponent ? opponentState.html(
-		$('<h3>').text(opponent).attr({ 'class': 'text-right' })) : opponentState.html(
-		$('<h3>').text('You are all alone...').attr({ 'class': 'text-right' }));
-
-	console.log('Game Initiate!!');
-	if (!!opponent && !!player) {
-		gameInstance.set({
-			'gameStart': true,
-			'playerTurn': 1
-		})
-
-	}
-}
-
-
-
