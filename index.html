@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+	<title>Multiplayer RPS</title>
+	<script src="https://www.gstatic.com/firebasejs/4.6.2/firebase.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/4.6.2/firebase-app.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/4.6.2/firebase-database.js"></script>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous" />
+	<link rel="stylesheet" href="assets/styles/style.css">
+</head>
+
+<body>
+	<header class="navbar navbar-inverse navbar-fixed-top">
+		<div class="container">
+			<div class="nav-brand">
+				<h3 class="text-muted text-center">
+					Rock Paper Scissors
+				</h3>
+			</div>
+		</div>
+	</header>
+	<main class="container">
+		<div class="row">
+			<section id="login">
+				<div class="col-sm-4 col-sm-offset-4">
+					<div class="input-group">
+						<!-- disabled the input area and buttons, and replace placeholder text to game state -->
+						<input type="text" name="player-name" id="player-name" class="form-control" placeholder="Player Name" aria-describedby="player-login" />
+						<!-- <button class="btn btn-default input-group-addon" >Player Login</button> -->
+						<span class="input-group-btn">
+        					<button class="btn btn-default" type="button" id="player-login">Player Login</button>
+      					</span>
+					</div>
+				</div>
+				<div class="col-sm-4"></div>
+			</section>
+			<section id="gameplay">
+				<div class="col-sm-4">
+					<div class="col-sm-12 col-sm-offset-0 player-field" id="player-1">
+					</div>
+				</div>
+				<div class="col-sm-4">
+					<div class="col-sm-12 col-sm-offset-0 player-field" id="turn-outcome">
+					</div>
+				</div>
+				<div class="col-sm-4">
+					<div class="col-sm-12 col-sm-offset-0 player-field" id="player-2">
+
+					</div>
+				</div>
+			</section>
+		</div>
+		<footer>
+			<div class="row">
+				<section id="chatbox" class="list-group">
+					<div class="list-group-item" style="padding: 0;">
+						<p>
+							Instant Message (Taunt your opponent)<span class="caret"></span>
+						</p>
+					</div>
+					<div class="chat-msgbox list-group-item">
+						<ul class="msg-box">
+							<li>
+								<p>
+									<span class="user-name"><b>Player 1</b></span>
+									<br> <span class="msg">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Molestiae asperiores necessitatibus fugit nihil totam sapiente harum minus iste, ea maiores alias exercitationem ex commodi ut aperiam, veniam quas aut temporibus.</span>
+								</p>
+							</li>
+						</ul>
+					</div>
+					<div class="list-group-item">
+						<div class="input-group">
+							<textarea name="message" class="form-control" id="user-msg" cols="30" rows="1"></textarea>
+							<span class="btn btn-default input-group-addon" id="sendmsg">Send</span>
+						</div>
+					</div>
+				</section>
+			</div>
+			</div>
+		</footer>
+	</main>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+	<script src="assets/scripts/firebase_mrps.js"></script>
+</body>
+
+</html>
