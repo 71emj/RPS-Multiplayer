@@ -141,9 +141,9 @@ const dataBase = firebase.database(),
 		'loginTime': '',
 		'playerSequence': '',
 		'playerName': '',
-		'win': '',
-		'lose': '',
-		'tie': ''
+		'win': 0,
+		'lose': 0,
+		'tie': 0
 	},
 	opponentStateMirror = {
 		'loginKey': '',
@@ -195,10 +195,13 @@ dataBase.ref().once('value').then(async function(snapshot) {
 	console.log(connectionsRef);
 	return new Promise((resolve, reject) => {
 		connectionsRef.once('value').then(function(snapshot) {
+			
 			if (snapshot.numChildren() > 2) {
 				connectionsRef.child(connectedId).remove();
+				toggleLogin(true);
 				throw new Error("Unfortunately, the current player spots are fulled. We\'ll reconnect you as soon as player spots are available.");
 			}
+
 			$('#player-login').on('click', async function() {
 				const input = $(this).parent('span').prev('input');
 				curConnect.update({
@@ -206,21 +209,24 @@ dataBase.ref().once('value').then(async function(snapshot) {
 					'timestamp': firebase.database.ServerValue.TIMESTAMP
 				});
 				input.val('');
+			
 				await connectionsRef.once('value').then((snapshot) => {
 					playerStateMirror['playerName'] = snapshot.child(connectedId).child('playerName').val();
 					playerStateMirror['loginTime'] = snapshot.child(connectedId).child('timestamp').val();
 					console.log(playerStateMirror['playerName']);
 					console.log(playerStateMirror['loginTime']);
 				});
+
 				resolve(connectionsRef);
 			});
 		})
-	}).catch((msg) => { console.log(msg); }); // reconnectUs();
+	}).catch((msg) => { console.log(msg); dataBase.goOffline(); }); // reconnectUs();
+
 }).then(function(connectionsRef) {
 	toggleLogin(true);
 
 	let opponent, player;
-	connectionsRef.on("value", async() => {
+	connectionsRef.on("value", async function gameInit() {
 		await recordCurPlayer().then(() => {
 			opponent = opponentStateMirror['playerName'];
 			player = playerStateMirror['playerName'];
@@ -234,23 +240,46 @@ dataBase.ref().once('value').then(async function(snapshot) {
 				if (!state) {
 					return;
 				}
-				callMeToGame(player, opponent);
+				gameStarts(player, opponent);
 			}).catch(() => { console.log('I feel so rejected') });
 	});
 
 });
 
-async function callMeToGame(player, opponent) {
+async function gameStarts(player, opponent) {
 	console.log('Thanks for calling me');
-	await createBtns($('#player-1')); // player
-	await createBtns($('#player-2')); // opponent
+	const playerRecord = dataBase.ref('/gameRecord'),
+		gameInstance = dataBase.ref('/gameInstance');
+
+	dataBase.ref('/connections').off('value', gameInit);
+	
+	createBtns($('#player-1')); // player
+	createBtns($('#player-2')); // opponent
+	await diableOpponentBtns($('#player-2'));
+	await establishPlayerRecord(player, playerRecord);
+
 
 	console.log('awaited');
 }
 
 
-function createBtns(playerTarget) {
-	playerTarget
+function establishPlayerRecord(player, playerRecord) {
+	playerRecord.child(player).set({
+		'win': playerStateMirror['win'],
+		'lose': playerStateMirror['lose'],
+		'tie': playerStateMirror['tie']
+	});
+}
+
+
+function diableOpponentBtns(opponentBtns) {
+	opponentBtns
+		.children('button')
+		.prop('disabled', 'disabled');
+}
+
+function createBtns(playerBtns) {
+	playerBtns
 		.append(
 			$('<button>')
 			.attr({
@@ -274,6 +303,9 @@ function createBtns(playerTarget) {
 			.text('Scissors')
 		);
 }
+
+
+
 
 
 
