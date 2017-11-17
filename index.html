@@ -6,8 +6,8 @@
 	<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
 	<title>Multiplayer RPS</title>
 	<script src="https://www.gstatic.com/firebasejs/4.6.2/firebase.js"></script>
-	<script src="https://www.gstatic.com/firebasejs/4.6.2/firebase-app.js"></script>
-	<script src="https://www.gstatic.com/firebasejs/4.6.2/firebase-database.js"></script>
+	<!-- <script src="https://www.gstatic.com/firebasejs/4.6.2/firebase-app.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/4.6.2/firebase-database.js"></script> -->
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous" />
 	<link rel="stylesheet" href="assets/styles/style.css">
 </head>
@@ -43,13 +43,29 @@
 					</div>
 				</div>
 				<div class="col-sm-4">
-					<div class="col-sm-12 col-sm-offset-0 player-field" id="turn-outcome">
+					<div class="col-sm-12 col-sm-offset-0 player-field text-center center" id="turn-outcome">
 					</div>
 				</div>
 				<div class="col-sm-4">
 					<div class="col-sm-12 col-sm-offset-0 player-field" id="player-2">
-
 					</div>
+				</div>
+			</section>
+			<section id="game-info">
+				<div class="col-sm-4">
+					<p>
+						<strong class="win">Win: <em>0</em></strong>
+						<strong class="lose">Lose: <em>0</em></strong>
+						<strong class="tie">Tie: <em>0</em></strong>
+					</p>
+				</div>
+				<div class="col-sm-4"></div>
+				<div class="col-sm-4">
+					<p>
+						<strong class="win">Win: <em>0</em></strong>
+						<strong class="lose">Lose: <em>0</em></strong>
+						<strong class="tie">Tie: <em>0</em></strong>
+					</p>
 				</div>
 			</section>
 		</div>
@@ -83,7 +99,8 @@
 		</footer>
 	</main>
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-	<script src="assets/scripts/firebase_mrps.js"></script>
+	<!-- <script src="assets/scripts/firebase_mrps.js"></script> -->
+	<script src="assets/scripts/firebase_mrps_alt.js"></script>
 </body>
 
 </html>

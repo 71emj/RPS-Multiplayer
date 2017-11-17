@@ -125,33 +125,98 @@
 		});
 
 
+		function timeOUT() {
+			return new Promise(resolve => {
+				setTimeout(function() {
+					console.log('Whooo, 10seconds past~');
+					resolve();
+				}, 10000);
+			})
+		}
+
 		let player, opponent, actionCue = 0,
 			temp;
 		// download both player and opponent name to the game
 		// should probably use a different handler to manage event fire
 		connectionsRef.on("value", recordCurPlayer);
 
-		function recordCurPlayer(playerSnapshot) {
+		// async function recordCurPlayer(playerSnapshot) {
+		// 	const curPlayerIds = Object.getOwnPropertyNames(playerSnapshot.val());
+		// 	curPlayerIds.forEach(function(elem) {
+		// 		elem === connectedId && (player = playerSnapshot.child(elem).child('playerName').val());
+		// 		elem !== connectedId && (opponent = playerSnapshot.child(elem).child('playerName').val());
+		// 		if (parseInt(playerSnapshot.child(elem).child('timestamp').val()) > actionCue) {
+		// 			temp = elem;
+		// 		}
+		// 	})
+
+		// 	temp !== connectedId && (actionCue = 1);
+		// 	temp === connectedId && (actionCue = 2);
+
+		// 	console.log(opponent);
+		// 	console.log(player);
+
+		// 	await timeOUT();
+
+		// 	// console.log(temp);
+		// 	console.log('Current action cue is....' + actionCue);
+		// 	// const gameReady = gameInit(player, opponent);
+		// 	const gameReady = gameInit(player, opponent);
+		// 	// if (gameReady) {
+		// 	// 	gameStart(actionCue);
+		// 	// }
+		// }
+
+
+		async function recordCurPlayer(playerSnapshot) {
 			const curPlayerIds = Object.getOwnPropertyNames(playerSnapshot.val());
-			curPlayerIds.forEach(function(elem) {
-				elem === connectedId && (player = playerSnapshot.child(elem).child('playerName').val());
-				elem !== connectedId && (opponent = playerSnapshot.child(elem).child('playerName').val());
-				if (parseInt(playerSnapshot.child(elem).child('timestamp').val()) > actionCue) {
-					temp = elem;
-				}
-			})
 
-			temp !== connectedId && (actionCue = 1);
-			temp === connectedId && (actionCue = 2);
+			// await for logPlayerToLocal to resolve, which will return true or false, if false return
+			// will need to wait til this is resolved
+			await logPlayerToLocal(curPlayerIds, playerSnapshot)
+				.then(function() {
+					gameInit(player, opponent);
+				}).catch();
 
-			// console.log(temp);
-			console.log('Current action cue is....' + actionCue);
-			// const gameReady = gameInit(player, opponent);
-			const gameReady = gameInit(player, opponent);
-			// if (gameReady) {
-			// 	gameStart(actionCue);
-			// }
 		}
+
+		function logPlayerToLocal(curPlayerIds, playerSnapshot) {
+			return new Promise((resolve, reject) => {
+				const player1 = curPlayerIds[0],
+					player2 = curPlayerIds[1];
+
+				try {
+					if (player1 === connectedId) {
+						player = playerSnapshot.child(player1).child('playerName').val();
+						opponent = playerSnapshot.child(player2).child('playerName').val();
+					} else {
+						opponent = playerSnapshot.child(player1).child('playerName').val();
+						player = playerSnapshot.child(player2).child('playerName').val();
+					}
+
+					temp !== connectedId && (actionCue = 1);
+					temp === connectedId && (actionCue = 2);
+
+					if (!opponent && !player) {
+						throw new Error('No one\'s login atm...I\'m just gonna have lunch myself');
+					} else if (!opponent || !player) {
+						throw new Error(!opponent ? 'Waiting for your opponent to logon.' :
+							'You have to login to play the game, dumb dumb!!');
+					}
+
+					resolve(true);
+				} catch (error) {
+					console.log(error.message);
+					// reject(error);
+				}
+			});
+		}
+
+
+
+
+
+
 
 		function gameInit(player, opponent) {
 			const opponentState = $('#player-2'),
