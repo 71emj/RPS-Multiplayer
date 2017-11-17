@@ -23,26 +23,15 @@ function initDataPath(path, childKeys = []) {
 	})
 }
 
-
 // if connected player at max, pass true
 // need to think of a way to invoke else
-function toggleLogin(diableLogin) {
-	if (diableLogin) {
-		$('#player-login')
-			.prop('disabled', true)
-			.parent('span')
-			.prev('input')
-			.prop('disabled', true);
-		return;
-	}
-
+function toggleLogin(isDisabled = false) {
 	$('#player-login')
-		.prop('disabled', false)
+		.prop('disabled', isDisabled)
 		.parent('span')
 		.prev('input')
-		.prop('disabled', false);
+		.prop('disabled', isDisabled);
 }
-
 
 function recordCurPlayer() {
 	return new Promise(resolve => {
@@ -123,6 +112,53 @@ function createBtns(playerBtns) {
 		);
 }
 
+async function gameStarts(player, opponent) {
+	return new Promise(resolve => {
+		console.log('Thanks for calling me');
+		const playerRecord = dataBase.ref('/gameRecord'),
+			gameInstance = dataBase.ref('/gameInstance');
+
+		createBtns($('#player-1')); // player
+		createBtns($('#player-2')); // opponent
+		diableOpponentBtns($('#player-2'));
+		establishPlayerRecord(player, playerRecord);
+		initGameInstance(player, gameInstance);
+
+		gameInstance.child(player).on('value', (snap) => {
+			if (snap.val().playerMove) {
+				resolve(true);
+			}
+		});
+	});
+}
+
+async function initGameInstance(player, gameInstance) {
+	console.log('djfkdajf');
+	gameInstance.child(player).set({
+		'playerMove': true
+	})
+}
+
+function rpsCore(playerChoice, opponentChoice, player, opponent) {
+	let winner;
+	console.log(player + "   " + opponent);
+	console.log('player\'s move:   ' + playerChoice);
+	console.log('opponent\'s move:   ' + opponentChoice);
+	if (playerChoice === opponentChoice) {
+		return 'nowinner';
+	}
+
+	playerChoice > opponentChoice ? winner = player : winner = opponent;
+
+	if (playerChoice === 0 && opponentChoice === 2) {
+		winner = player;
+	} else if (playerChoice === 2 && opponentChoice === 0) {
+		winner = opponent;
+	}
+	return winner;
+} 
+
+
 /////////////////////////////////////////////////////////////////////////////////////////
 
 function reconnectUs() {
@@ -183,9 +219,11 @@ const dataBase = firebase.database(),
 		'tie': 0
 	},
 	opponentStateMirror = {
-		'loginKey': '',
 		'playerName': '',
 		'playerSequence': '',
+		'win': 0,
+		'lose': 0,
+		'tie': 0
 	};
 
 let curConnect, connectedId;
@@ -280,55 +318,91 @@ dataBase.ref().once('value').then(async function(snapshot) {
 				if (!state) {
 					return;
 				}
-				gameStarts(player, opponent);
+				gameStarts(player, opponent).then((state) => {
+					if (!state) {
+						return;
+					}
+					choiceListener(player, opponent, dataBase.ref('/gameInstance'))
+					.then()
+				});
 			}).catch(() => { console.log('I feel so rejected') });
 	});
-
 });
 
-async function gameStarts(player, opponent) {
-	console.log('Thanks for calling me');
-	const playerRecord = dataBase.ref('/gameRecord'),
-		gameInstance = dataBase.ref('/gameInstance');
-
-	dataBase.ref('/connections').off('value', gameInit);
-
-	createBtns($('#player-1')); // player
-	createBtns($('#player-2')); // opponent
-	await diableOpponentBtns($('#player-2'));
-	await establishPlayerRecord(player, playerRecord);
-	await initGameInstance(player, gameInstance);
-
-	gameplayHandler(player, opponent, gameInstance);
-	console.log('awaited');
-}
 
 
-function initGameInstance(player, gameInstance) {
-	gameInstance.child(player).set({
-		'playerMove': -1
-	})
-}
 
 
-async function gameplayHandler(player, opponent, gameInstance) {
+
+async function choiceListener(player, opponent, gameInstance) {
+	console.log('Make your move');
 	let playerChoice, opponentChoice;
 
-	await $('#player-1').on('click', '.btn', (event) => {
-		event.preventDefault();
-
-		playerChoice = $(this).data('value');
-		gameInstance.child(player).update({
+	$('#player-1').on('click', '.btn', function listener(event)  {
+		// event.preventDefault();
+		console.log('somewhat early');
+		playerChoice = parseInt($(event.currentTarget).data('value'));
+		dataBase.ref('/gameInstance').child(player).update({
 			'playerMove': playerChoice
 		});
-	})
 
-	await gameInstance.child(opponent).once('value').then((snapshot) => {
-		opponentChoice = snapshot.val().playerMove;
-		console.log(opponentChoice);
-	})
+		gameInstance.child(opponent).on('value', (snapshot) => {
+			opponentChoice = snapshot.child('playerMove').val();
+			console.log('later than onclick');
+			console.log(opponentChoice);
 
-	console.log(opponentChoice);
+			if ($.isNumeric(playerChoice) && $.isNumeric(opponentChoice)) {
+				console.log('This should fire last');
+				// this is important so that we can call choiceListener multiple times
+				$('#player-1').off('click', '.btn', listener);
+				return rpsCore(playerChoice, opponentChoice, player, opponent);
+			}
+		});
 
-
+	});
 }
+
+
+
+
+
+
+
+// gameInstance.child(player).update({
+// 	'playerMove': playerChoice
+// });
+
+
+
+// switch (rpsCore(playerChoice, opponentChoice, player, opponent)) {
+// 	case player:
+// 		++playerStateMirror['win'];
+// 		console.log('player winns');
+// 		break;
+// 	case opponent:
+// 		++playerStateMirror['lose'];
+// 		console.log('player losee');
+// 		break;
+// 	case 'nowinner':
+// 		++playerStateMirror['tie'];
+// 		console.log('It\'s a tie');
+// 		break;
+// 	default:
+// 		console.log('Uh oh something went wrong');
+// 		return;
+// }
+// .then(async(isSuccessful) => {
+// 	await dataBase.ref('/gameRecord').child(player).update({
+// 		'win': playerStateMirror['win'],
+// 		'lose': playerStateMirror['lose'],
+// 		'tie': playerStateMirror['tie']
+// 	});
+
+// 	dataBase.ref('/gameRecord').child(opponent).once('value').then(async(snap) => {
+// 		console.log(snap);
+// 	})
+// })
+
+
+
+
